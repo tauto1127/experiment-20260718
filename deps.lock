@@ -1,0 +1,13 @@
+# Evaluation dependency lock
+# Update this file together with the mros2-wasm submodule pointer.
+
+mros2-wasm 5de07fc69c5e34c68ad48d37c8c2a9b2a83fa1c5
+mros2 47bc15441ddf514c85b87854f20c04b93295cace
+embeddedRTPS 4e59749f337c217fbe5da46731fd4086bd718cc9
+lwip-wasm fd7ca483969999a77d5ead58af24079e0fd378e8
+cmsis-wasm e5bae0901170296908996a927753a7a07a245434
+occupancy_grid_node d4c7c7a7bbcd0301ac5c7e61ddf38692f05b7ecf
+wamr e634caf39844c64b8fedab160c936f71c239af74
+cartographer 877157a0d91788a7700221d87232d412cb3c1ef4
+boost 1b67612008f0453f424394a7ff5472da110a1b0f
+zlib e3dc0a85b7032e98380dec011bc8f2c2ee0d8fca

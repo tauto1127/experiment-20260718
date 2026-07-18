@@ -1,0 +1,4 @@
+[submodule "mros2-wasm"]
+	path = mros2-wasm
+	url = git@github.com:tauto1127/mros2-wasm.git
+	branch = service-communication

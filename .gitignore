@@ -1,0 +1,10 @@
+# Build output generated inside the mros2-wasm submodule.
+mros2-wasm/cmake_build/
+mros2-wasm/cmsis-wasm/cmake_build/
+mros2-wasm/lwip-wasm/cmake_build/
+mros2-wasm/cmsis-wasm/public/
+mros2-wasm/lwip-wasm/public/
+
+# Local WASI sysroot and generated Python files.
+wasi-sysroot/
+**/__pycache__/
