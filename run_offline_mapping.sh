@@ -3,8 +3,8 @@
 source /opt/ros/humble/setup.bash
 
 # Ensure network is configured
-echo "Ensuring veth network interfaces are set up..."
-/home/osslab/.gemini/antigravity-cli/brain/e19f3663-cbb5-4bb0-8ea9-8bce66f49925/scratch/setup_network.sh
+echo "Verifying physical network interface..."
+/home/ubuntu/experiment-20260718/setup_network.sh
 
 # Cleanup trap for background processes
 PLAY_PID=""
@@ -30,30 +30,25 @@ cleanup() {
 trap cleanup EXIT
 
 echo "Starting rosbag playback..."
-# Play rosbag. Set ROS_LOCALHOST_ONLY=0 so it publishes to veth_host
+# Play rosbag. Set ROS_LOCALHOST_ONLY=0 so it publishes to physical network interface
 export ROS_LOCALHOST_ONLY=0
-ros2 bag play /home/osslab/turtlebot3_simulation_bag --clock > /tmp/rosbag_play.log 2>&1 &
+ros2 bag play /home/ubuntu/experiment-20260718/turtlebot3_simulation_bag --clock > /tmp/rosbag_play.log 2>&1 &
 PLAY_PID=$!
 
 sleep 2
 
 echo "Starting ROS 2 Cartographer..."
-ros2 launch /home/osslab/ishimotti-mros2-posix/workspace/occupancy_grid_node/launch/cartographer_no_occupancy.launch.py use_sim_time:=true > /tmp/cartographer_offline.log 2>&1 &
+ros2 launch /home/ubuntu/experiment-20260718/cartographer_no_occupancy.launch.py use_sim_time:=true > /tmp/cartographer_offline.log 2>&1 &
 CARTO_PID=$!
 
 sleep 3
 
 echo "Starting mros2-wasm-stable (occupancy_grid_node)..."
 # Set environment variables for the WASM application
-export MROS2_IFNAME=veth_wasm
+export MROS2_IFNAME=eth0
 
-# Execute WAMR using wamr-fast-interp-stable
-/home/osslab/wamr-fast-interp-stable/product-mini/platforms/linux/build_cr/iwasm \
-  --addr-pool=0.0.0.0/0:8000-9000 \
-  --max-threads=128 \
-  --env=MROS2_IFNAME=veth_wasm \
-  --dir=/tmp \
-  /home/osslab/mros2-wasm-stable/cmake_build/occupancy_grid_node.wasm > /tmp/mros2_wasm_offline.log 2>&1 &
+# Execute WAMR using wamr-fast-interp-stable with unlimited address pool
+sudo -E /home/ubuntu/experiment-20260718/mros2-wasm/third_party/wamr/product-mini/platforms/linux/build/iwasm   --max-threads=128   --env=MROS2_IFNAME=eth0   --addr-pool=0.0.0.0/0:7400-9000 --heap-size=52428800   --dir=/tmp   /home/ubuntu/experiment-20260718/mros2-wasm/cmake_build/occupancy_grid_node.wasm > /tmp/mros2_wasm_offline.log 2>&1 &
 WASM_PID=$!
 
 echo "All components launched."
