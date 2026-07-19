@@ -100,6 +100,13 @@ WAMR は classic interpreter を使用します。スレッド関連の指定は
 
 測定結果は、単純な処理速度だけでなく、通信オーバーヘッド・消費電力・計算資源とのトレードオフとして比較します。これにより、どの処理を Raspberry Pi から分離すると有効か、また WASM 化による遅延が実用上許容できるかを評価します。
 
+`scripts/run_wasm_offline_measurement.sh` は 1 秒間隔でプロセス別の
+`process_metrics.csv` と、実行機全体の `system_metrics.csv` を出力します。
+後者には、全CPUコアを合計した CPU 使用率と、`MemAvailable` を差し引いた
+メモリ使用量を記録します。WASMをホストへ配置する比較ケースでは、同じ
+`collect_system_metrics.sh` を Raspberry Pi 側とホスト側の両方で実行し、
+各マシンの値を別ファイルとして保存します。
+
 ## 再現性
 
 実験結果には、少なくとも以下を併記します。

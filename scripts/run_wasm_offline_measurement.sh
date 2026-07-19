@@ -20,6 +20,7 @@ carto_launch_pid=''
 carto_pid=''
 bag_pid=''
 monitor_pid=''
+system_monitor_pid=''
 
 stop_pid() {
   local pid=${1:-}
@@ -33,7 +34,7 @@ stop_pid() {
 }
 
 cleanup() {
-  for pid in "$monitor_pid" "$bag_pid" "$carto_pid" "$carto_launch_pid" "$wasm_pid" "$wasm_sudo_pid"; do
+  for pid in "$monitor_pid" "$system_monitor_pid" "$bag_pid" "$carto_pid" "$carto_launch_pid" "$wasm_pid" "$wasm_sudo_pid"; do
     stop_pid "$pid"
   done
 }
@@ -73,11 +74,16 @@ bag_pid=$!
 "$repo_dir/scripts/collect_process_metrics.sh" "$run_dir/process_metrics.csv" \
   "iwasm:$wasm_pid" "cartographer:$carto_pid" "rosbag:$bag_pid" &
 monitor_pid=$!
+"$repo_dir/scripts/collect_system_metrics.sh" "$run_dir/system_metrics.csv" &
+system_monitor_pid=$!
 
 wait "$bag_pid" || true
 stop_pid "$monitor_pid"
 wait "$monitor_pid" 2>/dev/null || true
 monitor_pid=''
+stop_pid "$system_monitor_pid"
+wait "$system_monitor_pid" 2>/dev/null || true
+system_monitor_pid=''
 stop_pid "$carto_pid"
 stop_pid "$carto_launch_pid"
 stop_pid "$wasm_pid"
