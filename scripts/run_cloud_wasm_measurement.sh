@@ -83,8 +83,11 @@ ssh "$pi_host" "mkdir -p '$pi_run_dir'"
 ssh "$pi_host" \
   "cd '$pi_repo' && ./scripts/run_wasm_offline_measurement.sh --external-wasm '$pi_run_dir'"
 
-mkdir -p "$run_dir/pi"
-scp -r "$pi_host:$pi_run_dir/." "$run_dir/pi/"
+[ ! -e "$run_dir/pi" ] || {
+  echo "ERROR: result destination already exists: $run_dir/pi" >&2
+  exit 1
+}
+scp -r "$pi_host:$pi_run_dir" "$run_dir/pi"
 
 cp /tmp/occupancy_grid_node_metrics.csv "$host_run_dir/"
 cp /tmp/occupancy_grid_node_health.txt "$host_run_dir/"

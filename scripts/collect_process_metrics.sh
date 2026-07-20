@@ -27,12 +27,22 @@ while :; do
     status_file="/proc/$pid/status"
     [ -r "$stat_file" ] || continue
     [ -r "$status_file" ] || continue
-    alive=1
 
-    cpu_ticks=$(awk '{print $14 + $15}' "$stat_file")
-    rss_kb=$(awk '/^VmRSS:/ {print $2}' "$status_file")
-    hwm_kb=$(awk '/^VmHWM:/ {print $2}' "$status_file")
-    threads=$(awk '/^Threads:/ {print $2}' "$status_file")
+    # A process can exit after the readability check above. Treat that normal
+    # shutdown race as the end of sampling rather than failing the experiment.
+    if ! cpu_ticks=$(awk '{print $14 + $15}' "$stat_file" 2>/dev/null); then
+      continue
+    fi
+    if ! rss_kb=$(awk '/^VmRSS:/ {print $2}' "$status_file" 2>/dev/null); then
+      continue
+    fi
+    if ! hwm_kb=$(awk '/^VmHWM:/ {print $2}' "$status_file" 2>/dev/null); then
+      continue
+    fi
+    if ! threads=$(awk '/^Threads:/ {print $2}' "$status_file" 2>/dev/null); then
+      continue
+    fi
+    alive=1
     cpu_percent=0
 
     if [ -n "${previous_ticks[$pid]:-}" ]; then
