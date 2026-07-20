@@ -118,6 +118,10 @@ stop_pid "$carto_launch_pid"
 stop_pid "$wasm_pid"
 stop_pid "$wasm_sudo_pid"
 
+power_measurement_ended_at=$(date --iso-8601=seconds)
+printf '=== POWER_MEASUREMENT_END rosbag_complete=%s ===\n' \
+  "$power_measurement_ended_at" | tee -a "$run_dir/measurement_markers.log"
+
 if [ "$external_wasm" = false ]; then
   cp /tmp/occupancy_grid_node_metrics.csv "$run_dir/occupancy_grid_node_metrics.csv"
   cp /tmp/occupancy_grid_node_health.txt "$run_dir/occupancy_grid_node_health.txt"
