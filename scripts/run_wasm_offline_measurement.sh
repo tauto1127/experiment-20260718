@@ -64,8 +64,18 @@ wasm_pid=$(pgrep -P "$wasm_sudo_pid" | head -n 1)
 
 ros2 launch "$launch" use_sim_time:=true >"$run_dir/cartographer.log" 2>&1 &
 carto_launch_pid=$!
+carto_pid=''
+for _ in $(seq 1 50); do
+  carto_pid=$(pgrep -P "$carto_launch_pid" | head -n 1 || true)
+  [ -n "$carto_pid" ] && break
+  sleep 0.1
+done
+[ -n "$carto_pid" ]
+power_measurement_started_at=$(date --iso-8601=seconds)
+printf '=== POWER_MEASUREMENT_START cartographer_launch=%s pid=%s ===\n' \
+  "$power_measurement_started_at" "$carto_pid" | tee -a "$run_dir/measurement_markers.log"
+printf '%s\n' "$power_measurement_started_at" > "$run_dir/power_measurement_start.txt"
 sleep 5
-carto_pid=$(pgrep -P "$carto_launch_pid" | head -n 1)
 
 bash -lc "source /opt/ros/humble/setup.bash && exec ros2 bag play '$bag' --clock" \
   >"$run_dir/rosbag.log" 2>&1 &
