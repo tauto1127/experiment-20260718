@@ -83,6 +83,10 @@ ssh "$pi_host" "mkdir -p '$pi_run_dir'"
 ssh "$pi_host" \
   "cd '$pi_repo' && ./scripts/run_wasm_offline_measurement.sh --external-wasm '$pi_run_dir'"
 
+power_measurement_ended_at=$(date --iso-8601=seconds)
+printf '=== POWER_MEASUREMENT_END rosbag_complete=%s ===\n' \
+  "$power_measurement_ended_at" | tee -a "$host_run_dir/measurement_markers.log"
+
 [ ! -e "$run_dir/pi" ] || {
   echo "ERROR: result destination already exists: $run_dir/pi" >&2
   exit 1

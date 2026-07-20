@@ -154,8 +154,8 @@ HOST_MROS2_WASM_DIR=/path/to/built/mros2-wasm \
 
 SSH経由でPiの標準出力がホスト端末へ転送される。Cartographerプロセスを検出した
 時点で `POWER_MEASUREMENT_START` が表示されるため、その表示をPi電力計測の開始点と
-する。`CLOUD_MEASUREMENT_COMPLETE` が表示されたら電力計測を終了する。
-結果は `RESULT_DIR/pi/` と `RESULT_DIR/host/` に分けて保存される。
+する。SCPによる結果回収の直前に `POWER_MEASUREMENT_END` が表示されるため、その表示を
+Pi電力計測の終了点とする。結果は `RESULT_DIR/pi/` と `RESULT_DIR/host/` に分けて保存される。
 
 このケースでは、以下を同時に実行してマシン別の値を保存する。
 
