@@ -73,6 +73,20 @@ Cartographer と rosbag のみを起動する。ホスト側の WASM ノード�
 `ready to pub/sub message` まで起動してから、Pi 側で Cartographer、rosbag の
 順に起動する。
 
+ホスト側 WASM の準備後、Piでは次を実行する。Cartographerプロセスを検出した
+時点で `POWER_MEASUREMENT_START` が表示されるため、その表示を電力計測の開始点と
+する。
+
+```bash
+./scripts/run_wasm_offline_measurement.sh --external-wasm \
+  results/cloud-pi-$(date +%Y%m%dT%H%M%S)
+```
+
+rosbag再生終了後、このスクリプトが終了する直前を電力計測の終了点とする。
+`--external-wasm` ではPi側でWASMを起動・停止せず、Pi側のCartographer、rosbag、
+プロセス計測、システム全体計測だけを実行する。WASM側のイベントCSVとレイテンシは
+ホストで保存・集計する。
+
 このケースでは、以下を同時に実行してマシン別の値を保存する。
 
 ```bash
