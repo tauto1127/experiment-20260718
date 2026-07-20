@@ -63,6 +63,10 @@ Raspberry Pi 上で次を実行する。
 2. `cartographer_no_occupancy.launch.py` を起動する。
 3. rosbag を `--clock` 付きで再生する。
 
+`POWER_MEASUREMENT_START` はCartographerプロセスを検出した時点、
+`POWER_MEASUREMENT_END` はWASM・Cartographer停止後かつ結果CSVのコピー前に表示される。
+この2つを電力計測の開始点・終了点とする。
+
 起動順は重要である。mROS 2 ノードを先に起動しないと、後から起動する
 Cartographer が必要な通信を発見できない場合がある。
 
