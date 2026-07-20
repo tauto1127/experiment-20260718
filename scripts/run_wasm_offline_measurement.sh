@@ -1,6 +1,16 @@
 #!/usr/bin/env bash
 set -eo pipefail
 
+external_wasm=false
+if [ "${1:-}" = "--external-wasm" ]; then
+  external_wasm=true
+  shift
+fi
+if [ "$#" -gt 1 ]; then
+  echo "usage: $0 [--external-wasm] [RESULT_DIR]" >&2
+  exit 2
+fi
+
 repo_dir=$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)
 run_dir=${1:-"$repo_dir/results/run-$(date +%Y%m%dT%H%M%S)"}
 mkdir -p "$run_dir"
@@ -40,27 +50,32 @@ cleanup() {
 }
 trap cleanup EXIT INT TERM
 
-# WAMR/WASI cannot truncate a file that was created by an earlier run in this
-# environment.  Start every trial with fresh, exact output targets.
-sudo rm -f /tmp/mROS2-data.txt /tmp/occupancy_grid_node_health.txt \
-  /tmp/occupancy_grid_node_metrics.csv
+if [ "$external_wasm" = false ]; then
+  # WAMR/WASI cannot truncate a file that was created by an earlier run in this
+  # environment.  Start every trial with fresh, exact output targets.
+  sudo rm -f /tmp/mROS2-data.txt /tmp/occupancy_grid_node_health.txt \
+    /tmp/occupancy_grid_node_metrics.csv
 
-sudo -E "$iwasm" \
-  --max-threads=128 \
-  --addr-pool=0.0.0.0/0:7400-9000 \
-  --heap-size=52428800 \
-  --dir=/tmp \
-  "$wasm" >"$run_dir/iwasm.log" 2>&1 &
-wasm_sudo_pid=$!
+  sudo -E "$iwasm" \
+    --max-threads=128 \
+    --addr-pool=0.0.0.0/0:7400-9000 \
+    --heap-size=52428800 \
+    --dir=/tmp \
+    "$wasm" >"$run_dir/iwasm.log" 2>&1 &
+  wasm_sudo_pid=$!
 
-for _ in $(seq 1 30); do
-  if grep -q 'ready to pub/sub message' "$run_dir/iwasm.log"; then
-    break
-  fi
-  sleep 1
-done
-grep -q 'ready to pub/sub message' "$run_dir/iwasm.log"
-wasm_pid=$(pgrep -P "$wasm_sudo_pid" | head -n 1)
+  for _ in $(seq 1 30); do
+    if grep -q 'ready to pub/sub message' "$run_dir/iwasm.log"; then
+      break
+    fi
+    sleep 1
+  done
+  grep -q 'ready to pub/sub message' "$run_dir/iwasm.log"
+  wasm_pid=$(pgrep -P "$wasm_sudo_pid" | head -n 1)
+else
+  printf '=== EXTERNAL_WASM_READY waiting_for_cartographer ===\n' \
+    | tee -a "$run_dir/measurement_markers.log"
+fi
 
 ros2 launch "$launch" use_sim_time:=true >"$run_dir/cartographer.log" 2>&1 &
 carto_launch_pid=$!
@@ -81,8 +96,12 @@ bash -lc "source /opt/ros/humble/setup.bash && exec ros2 bag play '$bag' --clock
   >"$run_dir/rosbag.log" 2>&1 &
 bag_pid=$!
 
+process_targets=("cartographer:$carto_pid" "rosbag:$bag_pid")
+if [ "$external_wasm" = false ]; then
+  process_targets=("iwasm:$wasm_pid" "${process_targets[@]}")
+fi
 "$repo_dir/scripts/collect_process_metrics.sh" "$run_dir/process_metrics.csv" \
-  "iwasm:$wasm_pid" "cartographer:$carto_pid" "rosbag:$bag_pid" &
+  "${process_targets[@]}" &
 monitor_pid=$!
 "$repo_dir/scripts/collect_system_metrics.sh" "$run_dir/system_metrics.csv" &
 system_monitor_pid=$!
@@ -99,11 +118,13 @@ stop_pid "$carto_launch_pid"
 stop_pid "$wasm_pid"
 stop_pid "$wasm_sudo_pid"
 
-cp /tmp/occupancy_grid_node_metrics.csv "$run_dir/occupancy_grid_node_metrics.csv"
-cp /tmp/occupancy_grid_node_health.txt "$run_dir/occupancy_grid_node_health.txt"
-cp /tmp/mROS2-data.txt "$run_dir/mROS2-data.txt"
-"$repo_dir/scripts/summarize_latency.sh" "$run_dir/occupancy_grid_node_metrics.csv" \
-  > "$run_dir/latency_summary.csv"
+if [ "$external_wasm" = false ]; then
+  cp /tmp/occupancy_grid_node_metrics.csv "$run_dir/occupancy_grid_node_metrics.csv"
+  cp /tmp/occupancy_grid_node_health.txt "$run_dir/occupancy_grid_node_health.txt"
+  cp /tmp/mROS2-data.txt "$run_dir/mROS2-data.txt"
+  "$repo_dir/scripts/summarize_latency.sh" "$run_dir/occupancy_grid_node_metrics.csv" \
+    > "$run_dir/latency_summary.csv"
+fi
 
 git -C "$repo_dir" rev-parse HEAD > "$run_dir/experiment_commit.txt"
 git -C "$repo_dir/mros2-wasm" rev-parse HEAD > "$run_dir/mros2_wasm_commit.txt"
