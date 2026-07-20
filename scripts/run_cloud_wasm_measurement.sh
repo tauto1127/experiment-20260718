@@ -13,7 +13,7 @@ pi_repo=${PI_REPO:-/home/ubuntu/experiment-20260718}
 trial_id=$(date +%Y%m%dT%H%M%S)
 run_dir=${1:-"$repo_dir/results/cloud-$trial_id"}
 host_run_dir="$run_dir/host"
-pi_run_dir="/tmp/cartographer-cloud-$trial_id"
+pi_run_dir="$pi_repo/results/cloud-$trial_id-pi"
 
 iwasm="$host_mros2_wasm_dir/third_party/wamr/product-mini/platforms/linux/build/iwasm"
 wasm="$host_mros2_wasm_dir/cmake_build/occupancy_grid_node.wasm"
